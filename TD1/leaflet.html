@@ -3,26 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <title>Carte avec Leaflet</title>
-    <!-- CSS Leaflet -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <style>
-        body {
-            margin: 0;
-            padding: 0;
-        }
-        #map {
-            height: 100vh; /* plein écran */
-            width: 100%;
+        html, body { margin:0; padding:0; height:100%; }
+        #map { height: 100%; width: 100%; }
+        #toggleBtn {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 1000;
+            background: white;
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            cursor: pointer;
         }
     </style>
 </head>
 <body>
+
+<button id="toggleBtn">Basculer carte</button>
 <div id="map"></div>
 
-
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-
 <script src="leaflet.js"></script>
-<a href="carto.html">Vers exo 1</a>
+
 </body>
 </html>
