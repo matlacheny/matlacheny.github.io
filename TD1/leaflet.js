@@ -8,13 +8,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     const cartoLight = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
+        attribution: '&copy; OpenStreetMap &copy; CARTO',
         subdomains: 'abcd',
         maxZoom: 19
     });
 
     const watercolor = L.tileLayer('https://tiles.stadiamaps.com/tiles/stamen_watercolor/{z}/{x}/{y}.jpg?api_key=eed6a6b4-d171-43e4-8215-e5f8490b4245', {
-        attribution: 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a>',
+        attribution: 'Map tiles by Stamen Design, &copy; OpenStreetMap',
         minZoom: 1,
         maxZoom: 16,
         subdomains: "abcd"
@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Initialisation ---
     // =====================
     const map = L.map('map', {
-        center: [43.7, 7.3], // Alpes-Maritimes
+        center: [43.7, 7.3],
         zoom: 9,
         layers: [osm]
     });
@@ -53,11 +53,28 @@ document.addEventListener('DOMContentLoaded', () => {
     const niceMarker = L.marker(niceCoords).addTo(map).bindPopup("Nice");
     const marseilleMarker = L.marker(marseilleCoords).addTo(map).bindPopup("Marseille");
 
-    const mnLine = L.polyline([marseilleCoords, niceCoords], {
-        color: "green",
-        weight: 3,
-        opacity: 0.8
-    }).addTo(map);
+    const mnLine = L.polyline([marseilleCoords, niceCoords], { color: "green", weight: 2 }).addTo(map);
+
+    // =====================
+    // --- Route OSRM ---
+    // =====================
+    function drawRoute(start, end) {
+        const url = `https://router.project-osrm.org/route/v1/driving/${start[1]},${start[0]};${end[1]},${end[0]}?overview=full&geometries=geojson`;
+
+        fetch(url)
+            .then(res => res.json())
+            .then(data => {
+                if (data.routes && data.routes.length > 0) {
+                    const routeGeoJSON = data.routes[0].geometry;
+                    L.geoJSON(routeGeoJSON, {
+                        style: { color: 'blue', weight: 4, opacity: 0.7 }
+                    }).addTo(map);
+                }
+            })
+            .catch(err => console.error("Erreur OSRM:", err));
+    }
+
+    drawRoute(niceCoords, marseilleCoords);
 
     // =====================
     // --- Triangle des Bermudes ---
@@ -79,18 +96,16 @@ document.addEventListener('DOMContentLoaded', () => {
     bermudaTriangle.bindPopup('<strong>Triangle des Bermudes</strong><br>Miami — Bermudes — San Juan');
 
     // =====================
-    // --- Contrôle fonds ---
+    // --- Contrôle fonds/overlays ---
     // =====================
-    const overlayMaps = {
-        "Triangle des Bermudes": bermudaTriangle,
-        "Marseille - Nice": mnLine
-    };
-
     L.control.layers({
         "OpenStreetMap": osm,
         "Carto Light": cartoLight,
         "Watercolor": watercolor
-    }, overlayMaps, { position: 'topright' }).addTo(map);
+    }, {
+        "Triangle des Bermudes": bermudaTriangle,
+        "Marseille - Nice": mnLine
+    }).addTo(map);
 
     // =====================
     // --- Fonction Haversine ---
@@ -99,15 +114,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const R = 6371e3;
         const lat1 = coord1[0] * Math.PI / 180;
         const lat2 = coord2[0] * Math.PI / 180;
-        const dLat = (coord2[0] - coord1[0]) * Math.PI / 180;
-        const dLon = (coord2[1] - coord1[1]) * Math.PI / 180;
-
-        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-            Math.cos(lat1) * Math.cos(lat2) *
-            Math.sin(dLon/2) * Math.sin(dLon/2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-
-        return R * c;
+        const dLat = (coord2[0]-coord1[0])*Math.PI/180;
+        const dLon = (coord2[1]-coord1[1])*Math.PI/180;
+        const a = Math.sin(dLat/2)**2 + Math.cos(lat1)*Math.cos(lat2)*Math.sin(dLon/2)**2;
+        return 2*R*Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
     }
 
     // =====================
@@ -128,14 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
             .openPopup();
 
         if (accuracyCircle) map.removeLayer(accuracyCircle);
-
-        accuracyCircle = L.circle([lat, lon], {
-            radius: accuracy,
-            color: '#3388ff',
-            fillColor: '#3388ff',
-            fillOpacity: 0.2,
-            weight: 2
-        }).addTo(map);
+        accuracyCircle = L.circle([lat, lon], { radius: accuracy, color: '#3388ff', fillColor:'#3388ff', fillOpacity:0.2, weight:2 }).addTo(map);
 
         const distance = haversineDistance(marseilleCoords, [lat, lon]) / 1000;
         marseilleMarker.bindPopup(`Marseille<br>Distance jusqu'à vous : ${distance.toFixed(2)} km`).openPopup();
@@ -144,9 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (infoDiv) infoDiv.textContent = `Distance entre Marseille et votre position : ${distance.toFixed(2)} km`;
     }
 
-    function handleError(error) {
-        alert("Erreur de géolocalisation : " + error.message);
-    }
+    function handleError(error) { alert("Erreur de géolocalisation : " + error.message); }
 
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(updatePosition, handleError);
@@ -163,12 +164,7 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(resp => resp.json())
         .then(geojson => {
             L.geoJSON(geojson, {
-                style: {
-                    color: '#0077cc',
-                    weight: 2,
-                    fillColor: '#99ccff',
-                    fillOpacity: 0.3
-                },
+                style: { color: '#0077cc', weight: 2, fillColor:'#99ccff', fillOpacity:0.3 },
                 onEachFeature: (feature, layer) => {
                     if (feature.properties && feature.properties.nom) {
                         layer.bindPopup(`<strong>${feature.properties.nom}</strong>`);
