@@ -6,15 +6,19 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap contributors'
 }).addTo(map);
 
-// Marqueur par défaut
+// Marqueur par défaut (Paris)
 let marker = L.marker([48.8566, 2.3522]).addTo(map).bindPopup("Position par défaut").openPopup();
 
-// Fonction pour mettre à jour la position
+// ➕ Marqueur statique pour Nice
+const niceMarker = L.marker([43.7019183, 7.2666753]).addTo(map);
+niceMarker.bindPopup("Nice").openPopup();
+
+// Fonction pour mettre à jour la position utilisateur
 function updatePosition(position) {
     const lat = position.coords.latitude;
     const lon = position.coords.longitude;
 
-    // Déplacer la carte et le marqueur
+    // Déplacer la carte et le marqueur utilisateur
     map.setView([lat, lon], 13);
     marker.setLatLng([lat, lon])
         .setPopupContent(`Vous êtes ici<br>Lat: ${lat.toFixed(5)}, Lon: ${lon.toFixed(5)}`)
@@ -26,11 +30,9 @@ function handleError(error) {
     alert("Erreur de géolocalisation : " + error.message);
 }
 
-// Demande la position courante
+// Demande la position courante + suivi en temps réel
 if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(updatePosition, handleError);
-
-    // Suivi en temps réel
     navigator.geolocation.watchPosition(updatePosition, handleError);
 } else {
     alert("La géolocalisation n'est pas supportée par ce navigateur.");
