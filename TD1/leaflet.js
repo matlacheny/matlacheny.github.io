@@ -25,6 +25,33 @@ function updatePosition(position) {
         .openPopup();
 }
 
+// --- Triangle des Bermudes ---
+const bermudaTriangleCoords = [
+    [25.7617, -80.1918],   // Miami, FL
+    [32.3078, -64.7505],   // Bermuda
+    [18.4663, -66.1057]    // San Juan, Puerto Rico
+];
+
+// Dessiner le polygone (triangle)
+const bermudaTriangle = L.polygon(bermudaTriangleCoords, {
+    color: '#ff0000',      // bordure
+    weight: 2,
+    opacity: 0.8,
+    fillColor: '#ff6666',  // remplissage
+    fillOpacity: 0.2
+}).addTo(map);
+
+// Popup sur le polygone
+bermudaTriangle.bindPopup('<strong>Triangle des Bermudes</strong><br>Miami — Bermudes — San Juan');
+
+// Ajuster la vue pour montrer tout le triangle
+map.fitBounds(bermudaTriangle.getBounds());
+
+// Optionnel : afficher les sommets avec des markers étiquetés
+L.marker(bermudaTriangleCoords[0]).addTo(map).bindPopup('Miami');
+L.marker(bermudaTriangleCoords[1]).addTo(map).bindPopup('Bermuda');
+L.marker(bermudaTriangleCoords[2]).addTo(map).bindPopup('San Juan');
+
 // Gestion des erreurs
 function handleError(error) {
     alert("Erreur de géolocalisation : " + error.message);
