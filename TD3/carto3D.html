@@ -2,8 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Babylon.js Earth with Borders and Flags</title>
+    <title>Babylon.js Earth with Borders, Flags, and Leaflet</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <style>
         html, body {
             width: 100%;
@@ -13,9 +14,15 @@
             background-color: black;
         }
         #renderCanvas {
-            width: 100%;
+            width: 70%;
             height: 100%;
+            float: left;
             touch-action: none;
+        }
+        #map {
+            width: 30%;
+            height: 100%;
+            float: left;
         }
         #info {
             position: absolute;
@@ -26,13 +33,16 @@
             padding: 8px;
             border-radius: 5px;
             font-family: sans-serif;
+            z-index: 100;
         }
     </style>
     <script src="https://cdn.babylonjs.com/babylon.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
 <div id="info">Loading globe...</div>
 <canvas id="renderCanvas"></canvas>
+<div id="map"></div>
 <script src="script.js"></script>
 </body>
 </html>
