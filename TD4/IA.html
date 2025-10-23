@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space Shooter 3D</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #000;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+        #gameCanvas {
+            width: 100vw;
+            height: 100vh;
+            display: block;
+        }
+        
+        /* Main Menu Styles */
+        #mainMenu {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(135deg, #0c0c0c, #1a1a2e, #16213e);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .menu-title {
+            color: #00ffff;
+            font-size: 3em;
+            margin-bottom: 2rem;
+            text-shadow: 0 0 20px #00ffff;
+            font-weight: bold;
+        }
+        
+        .menu-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .menu-btn {
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2em;
+            color: white;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .menu-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+        }
+        
+        /* Country Selection Styles */
+        #countrySelection {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            z-index: 1001;
+        }
+        
+        .country-header {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            font-size: 1.5em;
+            z-index: 1002;
+        }
+        
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .back-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: #ff4757;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            z-index: 1002;
+        }
+        
+        /* High Scores Styles */
+        #highScores {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.95);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1001;
+        }
+        
+        .scores-title {
+            color: #ffd700;
+            font-size: 2.5em;
+            margin-bottom: 2rem;
+            text-shadow: 0 0 20px #ffd700;
+        }
+        
+        .scores-list {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2rem;
+            border-radius: 15px;
+            min-width: 400px;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+        
+        .score-item {
+            color: white;
+            font-size: 1.2em;
+            padding: 10px;
+            margin: 5px 0;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .score-rank {
+            color: #ffd700;
+            font-weight: bold;
+        }
+        
+        /* Game UI Styles */
+        #ui {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            font-size: 18px;
+            z-index: 100;
+        }
+        
+        #gameOver {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 24px;
+            text-align: center;
+            display: none;
+            z-index: 200;
+        }
+        
+        /* Flag Display */
+        .flag-display {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 60px;
+            height: 40px;
+            border: 2px solid white;
+            border-radius: 5px;
+            background-size: cover;
+            background-position: center;
+            z-index: 100;
+        }
+
+        /* Power-up Modal */
+        #powerupModal {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.85);
+            display: none;
+            z-index: 1500;
+            align-items: center;
+            justify-content: center;
+        }
+        .powerup-content {
+            background: #111827;
+            border: 1px solid #374151;
+            border-radius: 12px;
+            padding: 24px;
+            color: white;
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+        }
+        .powerup-title {
+            font-size: 1.6em;
+            margin-bottom: 16px;
+            color: #93c5fd;
+            text-align: center;
+        }
+        .powerup-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+        .powerup-card {
+            background: #1f2937;
+            padding: 16px;
+            border-radius: 10px;
+            border: 1px solid #374151;
+            cursor: pointer;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+            text-align: center;
+        }
+        .powerup-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.25);
+        }
+        .powerup-name {
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #e5e7eb;
+        }
+        .powerup-desc {
+            color: #9ca3af;
+            font-size: 0.95em;
+        }
+        
+        /* Plane Selection Styles */
+        .plane-card {
+            background: #1f2937;
+            padding: 16px;
+            border-radius: 10px;
+            border: 1px solid #374151;
+            cursor: pointer;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+            text-align: center;
+        }
+        .plane-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.25);
+        }
+        .plane-card.selected {
+            border-color: #3b82f6;
+            background: #1e3a8a;
+        }
+        .plane-name {
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #e5e7eb;
+        }
+        .plane-description {
+            color: #9ca3af;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <!-- Main Menu -->
+    <div id="mainMenu">
+        <h1 class="menu-title">🚀 SPACE SHOOTER 3D 🚀</h1>
+        <div class="menu-buttons">
+            <button class="menu-btn" onclick="startGame()">🎮 START GAME</button>
+            <button class="menu-btn" onclick="showHighScores()">🏆 HIGH SCORES</button>
+            <button class="menu-btn" onclick="showCountrySelection()">🌍 CHOOSE COUNTRY</button>
+            <button class="menu-btn" onclick="showPlaneSelection()">✈️ CHOOSE PLANE</button>
+        </div>
+        <div class="flag-display" id="selectedFlag" style="display: none;"></div>
+    </div>
+    
+    <!-- Country Selection -->
+    <div id="countrySelection">
+        <button class="back-btn" onclick="hideCountrySelection()">← Back to Menu</button>
+        <h2 class="country-header">Choose Your Country Flag</h2>
+        <div id="map"></div>
+    </div>
+    
+    <!-- High Scores -->
+    <div id="highScores">
+        <button class="back-btn" onclick="hideHighScores()">← Back to Menu</button>
+        <h2 class="scores-title">🏆 HIGH SCORES</h2>
+        <div class="scores-list" id="scoresList">
+            <!-- Scores will be populated here -->
+        </div>
+    </div>
+    
+    <!-- Plane Selection -->
+    <div id="planeSelection" style="position:absolute;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.9);display:none;z-index:1001;">
+        <button class="back-btn" onclick="hidePlaneSelection()">← Back to Menu</button>
+        <h2 class="country-header">Choose Your Plane</h2>
+        <div style="display:flex;gap:20px;padding:90px 24px 24px 24px;">
+            <div id="planeGrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;flex:1;color:#fff;">
+                <!-- Planes populated by JS -->
+            </div>
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;">
+                <h3 style="color:#fff;margin-bottom:20px;">Preview</h3>
+                <canvas id="planePreview" width="400" height="300" style="border:2px solid #374151;border-radius:8px;background:#1f2937;"></canvas>
+                <div id="planeInfo" style="margin-top:15px;color:#9ca3af;text-align:center;">
+                    Select a plane to see details
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Game Canvas -->
+    <canvas id="gameCanvas" style="display: none;"></canvas>
+    
+    <!-- Game UI -->
+    <div id="ui" style="display: none;">
+        <div>Level: <span id="level">1</span></div>
+        <div>Score: <span id="score">0</span></div>
+        <div>Health: <span id="health">100</span></div>
+        <div>Time: <span id="time">90</span></div>
+    </div>
+    
+    <!-- Game Over Screen -->
+    <div id="gameOver">
+        <h2>Game Over!</h2>
+        <p>Final Score: <span id="finalScore">0</span></p>
+        <button onclick="restartGame()">Restart</button>
+        <button onclick="backToMenu()">Back to Menu</button>
+    </div>
+
+    <!-- Power-up Selection Modal -->
+    <div id="powerupModal">
+        <div class="powerup-content">
+            <div class="powerup-title">Choose a Power-Up</div>
+            <div class="powerup-grid">
+                <div class="powerup-card" onclick="choosePowerUp('attack_speed')">
+                    <div class="powerup-name">Attack Speed</div>
+                    <div class="powerup-desc">Shoot faster this level</div>
+                </div>
+                <div class="powerup-card" onclick="choosePowerUp('attack_damage')">
+                    <div class="powerup-name">Attack Damage</div>
+                    <div class="powerup-desc">Your bullets deal more damage</div>
+                </div>
+                <div class="powerup-card" onclick="choosePowerUp('health_boost')">
+                    <div class="powerup-name">Health Boost</div>
+                    <div class="powerup-desc">Recover some health instantly</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.babylonjs.com/babylon.js"></script>
+    <script src="game.js"></script>
+</body>
+</html>
